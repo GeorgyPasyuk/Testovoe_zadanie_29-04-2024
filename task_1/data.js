@@ -229,6 +229,7 @@ export const encoded = [
     formatSize: "Не применимо",
     ca: null,
     mpmId: null,
+
   },
 ];
 

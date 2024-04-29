@@ -1,47 +1,125 @@
 <script lang="ts">
-  import svelteLogo from './assets/svelte.svg'
-  import viteLogo from '/vite.svg'
-  import Counter from './lib/Counter.svelte'
+  import { onMount } from 'svelte';
+
+  let currencies: string[] = [];
+
+  let firstCurrency = '';
+  let secondCurrency = '';
+
+  let amount1 = 0;
+  let amount2 = 0;
+
+  onMount(async () => {
+    const response = await fetch('https://api.exchangerate-api.com/v4/latest/USD');
+    const data = await response.json();
+    currencies = Object.keys(data.rates);
+    firstCurrency = currencies[0];
+    secondCurrency = currencies[1];
+  });
+
+  function setFirstAmount(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const newAmount = Number(target.value);
+    fetch(`https://api.exchangerate-api.com/v4/latest/${firstCurrency}`)
+            .then(res => res.json())
+            .then(data => {
+              amount2 = data.rates[secondCurrency] * newAmount;
+            });
+
+  }
+
+  function setSecondAmount(event: Event): void {
+    const target = event.target as HTMLInputElement;
+    const newAmount = Number(target.value)
+    fetch(`https://api.exchangerate-api.com/v4/latest/${secondCurrency}`)
+            .then(res => res.json())
+            .then(data => {
+              amount1 = data.rates[firstCurrency] * newAmount;
+            });
+  }
+
+  function setFirstCurrency(event: Event): void {
+    setFirstAmount(event);
+  }
+  function setSecondCurrency(event: Event) {
+    setSecondAmount(event);
+  }
+
 </script>
 
 <main>
-  <div>
-    <a href="https://vitejs.dev" target="_blank" rel="noreferrer">
-      <img src={viteLogo} class="logo" alt="Vite Logo" />
-    </a>
-    <a href="https://svelte.dev" target="_blank" rel="noreferrer">
-      <img src={svelteLogo} class="logo svelte" alt="Svelte Logo" />
-    </a>
+  <h1>Конвертер валют</h1>
+
+  <div class="currency-header">
+    <div>
+      <h2>Валюта 1:</h2>
+      <select class="currency-selector" id="fromCurrency" bind:value={firstCurrency} on:change={setFirstCurrency}>
+        {#each currencies as currency}
+          <option value={currency}>{currency}</option>
+        {/each}
+      </select>
+    </div>
+
+    <div>
+      <h2>Валюта 2:</h2>
+      <select class="currency-selector" id="toCurrency" bind:value={secondCurrency} on:change={setSecondCurrency}>
+        {#each currencies as currency}
+          <option value={currency}>{currency}</option>
+        {/each}
+      </select>
+    </div>
   </div>
-  <h1>Vite + Svelte</h1>
 
-  <div class="card">
-    <Counter />
+  <div class="input-group">
+    <label for="amount1">Сумма валюты {firstCurrency}:</label>
+    <input type="number" id="amount1" bind:value={amount1} on:input={setFirstAmount} />
   </div>
 
-  <p>
-    Check out <a href="https://github.com/sveltejs/kit#readme" target="_blank" rel="noreferrer">SvelteKit</a>, the official Svelte app framework powered by Vite!
-  </p>
-
-  <p class="read-the-docs">
-    Click on the Vite and Svelte logos to learn more
-  </p>
+  <div class="input-group">
+    <label for="amount2">Сумма валюты {secondCurrency}:</label>
+    <input type="number" id="amount2" bind:value={amount2} on:input={setSecondAmount}/>
+  </div>
 </main>
 
+
 <style>
-  .logo {
-    height: 6em;
-    padding: 1.5em;
-    will-change: filter;
-    transition: filter 300ms;
+  main {
+    text-align: center;
+    padding: 20px;
   }
-  .logo:hover {
-    filter: drop-shadow(0 0 2em #646cffaa);
+
+  h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
   }
-  .logo.svelte:hover {
-    filter: drop-shadow(0 0 2em #ff3e00aa);
+
+  .currency-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
   }
-  .read-the-docs {
-    color: #888;
+
+  .currency-selector {
+    width: 150px;
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  .input-group {
+    margin-bottom: 20px;
+  }
+
+  .input-group label {
+    font-weight: bold;
+    display: block;
+    margin-bottom: 5px;
+  }
+
+  .input-group input[type="number"] {
+    width: 150px;
+    padding: 8px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
   }
 </style>
